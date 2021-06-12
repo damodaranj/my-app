@@ -18,8 +18,8 @@ node{
    sh 'docker build -t karkeess/myweb-0.0.2 .'
    }
    stage('Docker Image Push'){
-   withCredentials([string(credentialsId: 'dockerPasss', variable: 'dockerPassword')]) {
-   sh "docker login -u karkeess -p ${dockerPassword}"
+   withCredentials([string(credentialsId: 'docker', variable: 'docker')]) {
+   sh "docker login -u karkeess -p ${docker}"
     }
    sh 'docker push karkeess/myweb-0.0.2'
    }
