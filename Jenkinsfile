@@ -15,13 +15,13 @@ node{
 	        }
 	    }
    stage('Build Docker Imager'){
-   sh 'docker build -t karkeess/myweb:0.0.5 .'
+   sh 'docker build -t karkeess/myweb-0.0.5 .'
    }
    stage('Docker Image Push'){
    withCredentials([string(credentialsId: 'dockerPass', variable: 'dockerPassword')]) {
    sh "docker login -u karkeess -p ${dockerPassword}"
     }
-   sh 'docker push karkeess/myweb:0.0.5'
+   sh 'docker push karkeess/myweb-0.0.5'
    }
    stage('Nexus Image Push'){
    sh "docker login -u admin -p admin123 65.2.123.80:8083"
@@ -35,7 +35,7 @@ node{
 		//  do nothing if there is an exception
 	}
    stage('Docker deployment'){
-   sh 'docker run -d -p 8090:8080 --name tomcattest karkeess/myweb:0.0.5' 
+   sh 'docker run -d -p 8090:8080 --name tomcattest karkeess/myweb-0.0.5' 
    }
 }
 }
