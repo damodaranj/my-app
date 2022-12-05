@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>in.javahome</groupId>
-	<artifactId>myweb</artifactId>
+	<artifactId>mysathi</artifactId>
 	<packaging>war</packaging>
 	<version>0.0.5</version>
 	<name>my-app</name>
