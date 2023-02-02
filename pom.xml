@@ -14,7 +14,7 @@
 	<dependencies>
 		<dependency>
 		    <groupId>org.apache.poi</groupId>
-		    <artifactId>poi</artifactId
+		    <artifactId>poi</artifactId>
 		    <version>3.7</version>
 		</dependency>
 
