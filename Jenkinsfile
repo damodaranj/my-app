@@ -29,7 +29,7 @@ node{
    sh 'docker push 3.110.193.37:8083/damo:1.0.0'
    }
 
-   stage('Remove Previous Container'){
+	stage('Remove Previous Container'){
 	try{
 		sh 'docker rm -f tomcattest'
 	}catch(error){
