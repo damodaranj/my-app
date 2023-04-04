@@ -12,7 +12,7 @@ node{
 	        def mvnHome =  tool name: 'maven3', type: 'maven'
 	    withSonarQubeEnv('sonar') {
 	          sh "${mvnHome}/bin/mvn sonar:sonar"
-	        }
+	    }
     }
    stage('Build Docker Image'){
    sh 'docker build -t saidamo/myweb:0.0.2 .'
