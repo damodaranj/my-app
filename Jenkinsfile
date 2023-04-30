@@ -1,42 +1,95 @@
-node{
-   stage('SCM Checkout'){
-     git 'https://github.com/Abarnamsh/my-app.git'
-   }
-	stage('maven-buildstage'){
+pipeline {
+    agent any
 
-      def mvnHome =  tool name: 'maven3', type: 'maven'   
-      sh "${mvnHome}/bin/mvn clean package"
-	  sh 'mv target/myweb*.war target/newapp.war'
-   }
-    stage('SonarQube Analysis') {
-	        def mvnHome =  tool name: 'maven3', type: 'maven'
-	    withSonarQubeEnv('sonar') {
-	          sh "${mvnHome}/bin/mvn sonar:sonar"
-	    }
-    }
-   stage('Build Docker Image'){
-   sh 'docker build -t saidamo/myweb:0.0.2 .'
-   }
-   stage('Docker Image Push'){
-   withCredentials([string(credentialsId: 'dockerPass', variable: 'dockerPassword')]) {
-   sh "docker login -u saidamo -p ${dockerPassword}"
-    }
-   sh 'docker push saidamo/myweb:0.0.2'
-   }
-   stage('Nexus Image Push'){
-   sh "docker login -u admin -p admin123 3.110.193.37:8083"
-   sh "docker tag saidamo/myweb:0.0.2 3.110.193.37:8083/damo:1.0.0"
-   sh 'docker push 3.110.193.37:8083/damo:1.0.0'
-   }
+    stages {
+        stage('SCM_Checkout') {
+            steps {
+                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'git_repo_pass', url: 'https://github.com/Venkateshd279/my-project.git']])
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+              script {
+             withSonarQubeEnv(credentialsId: 'SonarQube_token') {
+                 
+              sh 'mvn clean verify sonar:sonar'
+             }
+            }
+            
+            }
+        }
+        
+        stage("Quality Gate") {
+            steps {
+                sleep(60)
+              timeout(time: 1, unit: 'HOURS') {
+                waitForQualityGate abortPipeline: true, credentialsId: 'SonarQube_token'
+              }
+            }
+            post {
+        
+        failure {
+            echo 'sending email notification from jenkins'
+            
+                   step([$class: 'Mailer',
+                   notifyEveryUnstableBuild: true,
+                   recipients: emailextrecipients([[$class: 'CulpritsRecipientProvider'],
+                                      [$class: 'RequesterRecipientProvider']])])
 
-	stage('Remove Previous Container'){
-	try{
-		sh 'docker rm -f tomcattest'
-	}catch(error){
-		//  do nothing if there is an exception
-	}
-		stage('Docker deployment'){
-   sh 'docker run -d -p 8090:8080 --name tomcattest saidamo/myweb:0.0.2' 
-   }
-}
+            
+               }
+            }
+          }
+          
+        stage('Maven Compile') {
+            steps {
+                sh 'whoami'
+                sh script: 'mvn clean install'
+                sh 'mv target/myweb*.war target/newapp.war'
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    
+                    sh 'cd /var/lib/jenkins/workspace/Onlineshopping'
+                    def dockerImage = docker.build("venkateshdhanap/myweb:0.0.2", "--file Dockerfile .")
+                }
+            }
+        }
+        
+        
+        stage('Push Image to ECR') {
+            steps {
+                script {
+                    docker.withRegistry(
+                        'https://477099163803.dkr.ecr.ap-south-1.amazonaws.com',
+                        'ecr:ap-south-1:my.aws.credentials') {
+                            def myImage = docker.build('jenkins_project')
+                            myImage.push('latest')
+                        }
+                    }
+                }
+        }
+        
+        stage('Approval - Deploy EKS'){
+            steps {
+                
+                input 'Approve for EKS Deploy'
+            }
+        }
+        
+        stage('EKS Deploy') {
+            steps {
+                
+                echo 'Deploying on EKS'
+                withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', serverUrl: '']]) {
+               
+                 sh 'kubectl apply -f /var/lib/jenkins/mainservice.yaml'
+             }
+            }
+        }
+    }
 }
