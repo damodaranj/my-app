@@ -4,12 +4,20 @@
 	<groupId>in.javahome</groupId>
 	<artifactId>myweb</artifactId>
 	<packaging>war</packaging>
-	<version>0.0.3</version>
+	<version>0.0.5</version>
 	<name>my-app</name>
+	
+	<!-- Demo on Github Webhooks-->
 
 	<url>http://maven.apache.org</url>
 
 	<dependencies>
+		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi</artifactId>
+		    <version>3.7</version>
+		</dependency>
+
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
@@ -27,12 +35,12 @@
 	<distributionManagement>
 		 <snapshotRepository>
 		    <id>nexus</id>
-		    <url>http://172.31.17.173:8081/repository/maven-snapshots/</url>
+		    <url>http://13.233.125.37:8081/repository/maven-snapshots/</url>
 		 </snapshotRepository>
 		
 		<repository>
 		    <id>nexus</id>
-		    <url>http://172.31.17.173:8081/repository/maven-releases/</url>
+		    <url>http://13.233.125.37:8081/repository/maven-releases/</url>
 		</repository>
   	</distributionManagement>
 	
