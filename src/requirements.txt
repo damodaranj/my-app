@@ -1,0 +1,13 @@
+pandas
+pillow
+pytesseract
+pdf2image
+requests
+wget
+csv
+zipfile
+dash
+dash-core-components
+dash-html-components
+csv
+plotly
