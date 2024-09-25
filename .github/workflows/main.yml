@@ -1,0 +1,75 @@
+name: Sync from GitLab and Create Pull Request
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to sync from GitLab'
+        required: true
+        default: 'main'
+  schedule:
+    - cron: '0 12 * * *'  # Runs every day at 12:00 UTC
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      # Step 1: Checkout GitHub repository
+      - name: Checkout GitHub repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Required to pull all history and branches
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 2: Set Git identity
+      - name: Set git identity
+        run: |-
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          
+      - id: find_mutations
+        name: Find mutations
+        run: |-
+          mkdir -p gitlab-repo
+          cd gitlab-repo
+          git init
+          git remote add origin https://${{ secrets.GITLAB_USERNAME }}:${{ secrets.GITLAB_TOKEN }}@git.mtapi.io/root/mt5-java-api.git
+          git fetch origin 
+          git pull origin main
+          ls
+          rm -rf .git
+          rm -rf .github
+          rm -rf META-INF
+          rm -rf .gitlab-ci.yml
+          rm -rf README.md
+          rm -rf pg.txt
+          grep -rl 'mtapi.mt5' .
+          grep -rl 'mtapi.mt5' . | xargs sed -i 's/mtapi.mt5/io.quantum.trading.brokers.forex.mt5protocol.mtapi.mt5/g'
+          cd ..
+          git add gitlab-repo/**
+          git diff --staged --patch --exit-code > .repo.patch || echo "patch_created=true" >> $GITHUB_OUTPUT
+          git clean -df
+      # Step 4: Create Pull Request if changes are found
+      - name: Create Pull Request in GitHub
+        if: ${{ steps.find_mutations.outputs.patch_created == 'true' }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: |
+            brokers/src/main/java/io/quantum/trading/brokers/forex/mt5protocol/**
+          commit-message: |-
+            feat: Adding/Updating gitlab-files
+            [Workflow Run]: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          branch: kumar
+          title: "feat: Add a new commited files from GitLab"
+          body: |-
+            This pull request is created automatically by GitHub Actions to sync changes from GitLab.
+
+            [Workflow Run]: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          author: github-actions <github-actions@github.com>
+          committer: github-actions <github-actions@github.com>
+          signoff: true

@@ -1,0 +1,37 @@
+package io.quantum.trading.brokers.forex.mt5protocol.mtapi.mt5;
+
+// Position accounting method
+public enum AccMethod {
+  Default(0),
+  Netting(1),
+  Hedging(2);
+
+  public static final int SIZE = java.lang.Integer.SIZE;
+
+  private int intValue;
+  private static java.util.HashMap<Integer, AccMethod> mappings;
+
+  private static java.util.HashMap<Integer, AccMethod> getMappings() {
+    if (mappings == null) {
+      synchronized (AccMethod.class) {
+        if (mappings == null) {
+          mappings = new java.util.HashMap<Integer, AccMethod>();
+        }
+      }
+    }
+    return mappings;
+  }
+
+  private AccMethod(int value) {
+    intValue = value;
+    getMappings().put(value, this);
+  }
+
+  public int getValue() {
+    return intValue;
+  }
+
+  public static AccMethod forValue(int value) {
+    return getMappings().get(value);
+  }
+}
