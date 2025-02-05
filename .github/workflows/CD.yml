@@ -1,0 +1,34 @@
+name: Continuous deployment- Deploy Docker Image
+
+on:
+  push:
+    branches:
+      - master  # Change to your deployment branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Extract Version from pom.xml
+        run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      # Log in to GitHub Container Registry (GHCR)
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # Pull the Docker image from GHCR
+      - name: Pull Docker image from GHCR
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/myweb"
+          docker pull $IMAGE_NAME:${{ env.VERSION }}
+
+      # Run the Docker container
+      - name: Run Docker container
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/myweb"
+          docker run -d -p 8080:8080 $IMAGE_NAME:${{ env.VERSION }}

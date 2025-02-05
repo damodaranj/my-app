@@ -1,0 +1,39 @@
+name: Continuous Integration
+on:
+  pull_request:
+    branches: ["master"]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+      
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Java application
+        run: |
+          mvn clean package
+          ls target/
+
+      - name: Extract Version from pom.xml
+        run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & Tag Docker Image
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/myweb"
+          docker build -t $IMAGE_NAME:${{ env.VERSION }} .
+
+      - name: Push Docker Image to GHCR
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/myweb"
+          docker push $IMAGE_NAME:${{ env.VERSION }}
+
+      
